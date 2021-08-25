@@ -46,5 +46,6 @@ output/
 data/
 slurm-logs/
 tmp/
+.snakemake/
 *.done
 *.tmp
