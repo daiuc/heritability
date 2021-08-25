@@ -47,5 +47,6 @@ data/
 slurm-logs/
 tmp/
 .snakemake/
+scripts/.ipynb_checkpoints/
 *.done
 *.tmp
