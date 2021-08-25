@@ -45,4 +45,6 @@ vignettes/*.pdf
 output/
 data/
 slurm-logs/
+tmp/
 *.done
+*.tmp
