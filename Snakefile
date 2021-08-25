@@ -51,7 +51,7 @@ rule getconda:
 
 # split full cis-eQTL summary stats into 22 autosome subsets; helpful for parallelizatino
 rule split_sumStats:
-    input: "data/2019-12-11-cis-eQTLsFDR-ProbeLevel-CohortInfoRemoved-BonferroniAdded.txt"
+    input: "data/2019-12-11-cis-eQTLsFDR-ProbeLevel-CohortInfoRemoved-BonferroniAdded.txt.gz"
     output:
         done = touch("data/cis-eQTL-sumStats/cis-eQTL-sumStats.done")
     params:
@@ -96,7 +96,7 @@ rule munge_sumstats:
     group: get_group
     params:
         out_prefix_folder = "data/cis-eQTL-sumStats/byGene/{group}",
-        munge = "/gpfs/commons/home/cdai/TOOLS/ldsc/munge_sumstats.py"
+        munge = "../tools/ldsc/munge_sumstats.py"
     conda:
         "env/environment.yml"
     threads: 1
@@ -154,7 +154,7 @@ rule h2_baseline:
         weights_prefix = "data/weights_hm3_no_hla/weights.",
         freq_prefix = "data/1000G_frq/1000G.mac5eur.",
         out_prefix_folder = "output/byGene/{group}",
-        ldsc = "/gpfs/commons/home/cdai/TOOLS/ldsc/ldsc.py"
+        ldsc = "../tools/ldsc/ldsc.py"
     conda:
         "env/environment.yml"
     threads: 1

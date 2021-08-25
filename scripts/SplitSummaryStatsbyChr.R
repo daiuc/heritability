@@ -7,7 +7,7 @@ if (debug_mode == "run") {
     cis = fread(snakemake@input[[1]])
     file.names = paste(snakemake@params[[2]], chroms, ".txt", sep = "")
 } else {
-    cis = fread("data/2019-12-11-cis-eQTLsFDR-ProbeLevel-CohortInfoRemoved-BonferroniAdded.txt", nrows = 100000)
+    cis = fread("data/2019-12-11-cis-eQTLsFDR-ProbeLevel-CohortInfoRemoved-BonferroniAdded.txt.gz", nrows = 100000)
     file.names = paste("data/cis-eQTL-sumStats/cis-eQTL-sumStats.", chroms, ".txt", sep = "")
 }
 dts = map(chroms, ~ cis[SNPChr == chroms[.x]][order(SNPPos)])

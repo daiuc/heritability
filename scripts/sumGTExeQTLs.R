@@ -9,7 +9,7 @@ if (exists("snakemake@threads[[1]]")) {
 }
 NCores = min(threads, detectCores())
 
-setwd("/gpfs/commons/groups/sanjana_lab/cdai/ldsc/eQTLs/")
+#setwd("/home/chaodai/chao/heritability")
 
 out.file.name = "output/GTEx_v8_sigif_eQTL_summ.txt"
 
