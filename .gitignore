@@ -41,6 +41,8 @@ vignettes/*.pdf
 # ipynb checkpoints
 .ipynb_checkpoints/
 
-# large data
+# folders I don't want to upload
 output/
 data/
+slurm-logs/
+*.done
