@@ -39,7 +39,7 @@ vignettes/*.pdf
 .Renviron
 
 # ipynb checkpoints
-*.ipynb_checkpoints/*
+.ipynb_checkpoints/
 
 # large data
 output/
