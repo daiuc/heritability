@@ -14,6 +14,14 @@ CHROMS = [i for i in range(1,23)]
 FOLDERS = glob.glob1("data/cis-eQTL-sumStats/byGene", "group*")
 
 
+# def get_group_by_gene(wildcards):
+#     '''Use gene name to lookup pre-assigned groupname, then pass to snakemake for resource allocation'''
+#     return GroupLookup.get(wildcards.gene)
+    
+
+def get_group(wildcards):
+    return wildcards.group
+
 #####################################################################
 #                  rules, rules, rules                              #
 #####################################################################
@@ -57,9 +65,9 @@ rule split_sumStats:
     params:
         runmode = "run",
         out_prefix = "data/cis-eQTL-sumStats/cis-eQTL-sumStats."
-    threads: 1
+    threads: 8
     resources:
-        cpu=1,
+        cpu=8,
         mem_mb=30000,
         time=120
     script:
@@ -73,17 +81,12 @@ rule make_perGene_sumStats:
         perChrStats = "data/cis-eQTL-sumStats/cis-eQTL-sumStats.1.txt" # the script doesn't need inputs from snakemake
     output:
         done = touch("data/cis-eQTL-sumStats/byGene/perGene.done")
-    threads: 22
+    threads: 6
     script:
         "scripts/MakeperGeneStats_v2.R"
-    
-# def get_group_by_gene(wildcards):
-#     '''Use gene name to lookup pre-assigned groupname, then pass to snakemake for resource allocation'''
-#     return GroupLookup.get(wildcards.gene)
-    
 
-def get_group(wildcards):
-    return wildcards.group
+#-----------------------------------------------------------------------------
+
 
 # Use ldsc's munge_sumstats to produce required summary statistics file
 # NOTE, this is run on a per-gene bases

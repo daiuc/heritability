@@ -1,4 +1,4 @@
-library(parallel)
+library(furrr)
 library(data.table)
 library(tidyverse)
 
@@ -7,7 +7,10 @@ if (exists("snakemake@threads[[1]]")) {
 } else {
     threads = 30
 }
-NCores = min(threads, detectCores())
+NCores = min(threads, parallel::detectCores())
+plan(multisession, workers = NCores)
+future_globals_maxSize = 30*1024*1024^2 # this is effectively 30GB
+options(future.globals.maxSize = future_globals_maxSize)
 
 #setwd("/home/chaodai/chao/heritability")
 
@@ -18,10 +21,14 @@ out.file.name = "output/GTEx_v8_sigif_eQTL_summ.txt"
 
 SEL_COLS = c("phenotype_id", "variant_id", "slope", "maf")
 eQTL.files = map_chr(dir("data/GTEx_Analysis_v8_eQTL_EUR", "signif_pairs.txt.gz"), ~paste("data/GTEx_Analysis_v8_eQTL_EUR/", .x, sep = ""))
-eQTLs = mclapply(eQTL.files, fread, sep = "\t", header = T, select = SEL_COLS, mc.cores = NCores)
-eQTLs = mclapply(eQTLs, function(df) mutate(df, gene_id = str_extract(phenotype_id, "ENSG[0-9]+")) %>% 
-                            select(-phenotype_id) %>%
-                            filter(maf > 0.05 & maf < 0.95))
+#eQTLs = mclapply(eQTL.files, fread, sep = "\t", header = T, select = SEL_COLS, mc.cores = NCores)
+eQTLs = future_map(eQTL.files, fread, sep = "\t", header = T, select = SEL_COLS)
+# eQTLs = mclapply(eQTLs, function(df) mutate(df, gene_id = str_extract(phenotype_id, "ENSG[0-9]+")) %>% 
+#                             select(-phenotype_id) %>%
+#                             filter(maf > 0.05 & maf < 0.95))
+eQTLs = future_map(eQTLs, function(df) mutate(df, gene_id = str_extract(phenotype_id, "ENSG[0-9]+")) %>%
+                               select(-phenotype_id) %>%
+                               filter(maf > 0.05 & maf < 0.95))
 
 
 ### Compute total number of qualifying significant unique eQTLs across tissue samples ###
@@ -43,11 +50,11 @@ CombineChr_len = function(list_of_chr) {
 }
 
 
-eQTL.variants = mclapply(eQTLs, function(df) {select(df, gene_id, variant_id) %>%
+eQTL.variants = future_map(eQTLs, function(df) {select(df, gene_id, variant_id) %>%
                              group_by(gene_id) %>% 
                              nest %>%
                              mutate_at("data", function(data.col) map(data.col, ~ unlist(.x, use.names = F)))
-                                       },mc.cores = NCores)
+                                       })
 eQTL.variants = bind_rows(eQTL.variants) %>%
                             group_by(gene_id) %>%
                             summarise(N_QTLs = CombineChr_len(data))
@@ -62,7 +69,7 @@ Sum_QTLs = function(df) {
     return(df)
 }
                                               
-eQTLs = mclapply(eQTLs, Sum_QTLs, mc.cores = NCores) %>%
+eQTLs = future_map(eQTLs, Sum_QTLs) %>%
             bind_rows(.) %>% 
             group_by(gene_id) %>% 
             summarise(max.abs.slope = max(max.abs.slope)) %>% 

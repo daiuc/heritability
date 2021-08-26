@@ -1,4 +1,4 @@
-library(parallel)
+library(furrr)
 library(data.table)
 library(tidyverse)
 
@@ -7,8 +7,10 @@ if (exists("snakemake@threads[[1]]")) {
 } else {
     threads = 30
 }
-NCores = min(threads, detectCores())
-
+NCores = min(threads, parallel::detectCores())
+plan(multisession, workers = NCores)
+future_globals_maxSize = 30*1024*1024^2 # this is effectively 30GB
+options(future.globals.maxSize = future_globals_maxSize)
 
 #setwd("/project2/xuanyao/chao/heritability")
 
@@ -39,7 +41,8 @@ read_result = function(fn) {
 }
 
 # parallelize reading all *.result files, each list element is a df
-res.ls = mclapply(all_result_files, read_result, mc.cores = NCores)
+#res.ls = mclapply(all_result_files, read_result, mc.cores = NCores)
+res.ls = future_map(all_result_files, read_result)
 
 
 # compute tau_c_bar: verage per SNP heritability
@@ -49,8 +52,9 @@ tau_c_bar = group_by(res, Category) %>%
                 arrange(Category) %>% deframe
 
 # [total heritability per gene] = [tau_c_bar] * [number of snps per category]
-h2.tot = mclapply(res.ls, function(df) {mutate(df, h2 = M_annot * tau_c_bar) %>% pull(h2) %>% sum}, 
-                  mc.cores = NCores)
+#h2.tot = mclapply(res.ls, function(df) {mutate(df, h2 = M_annot * tau_c_bar) %>% pull(h2) %>% sum}, 
+#                  mc.cores = NCores)
+h2.tot = future_map(res.ls, function(df) {mutate(df, h2 = M_annot * tau_c_bar) %>% pull(h2) %>% sum})
 h2.tot = enframe(unlist(h2.tot), name = "gene", value = "h2")
 
 # get number of SNPs for each gene
